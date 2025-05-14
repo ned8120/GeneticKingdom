@@ -1,14 +1,14 @@
 #include "ArtilleryTower.h"
 #include <iostream>
 
-ArtilleryTower::ArtilleryTower(int r, int c) : Tower(r, c, BASE_COST) {
+ArtilleryTower::ArtilleryTower(int r, int c, SDL_Texture* tex) : Tower(r, c, BASE_COST, tex) {
     // Inicializa atributos específicos
     damage = BASE_DAMAGE;
     range = BASE_RANGE;
     attackSpeed = BASE_ATTACK_SPEED;
     specialCooldown = BASE_SPECIAL_COOLDOWN;
     
-    // Color rojo oscuro para los artilleros
+    // Color rojo oscuro para los artilleros (como respaldo)
     color = {150, 0, 0, 255};
 }
 

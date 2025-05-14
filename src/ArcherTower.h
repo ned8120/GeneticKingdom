@@ -12,7 +12,7 @@ private:
     static const int BASE_COST = 25;        // Bajo costo
 
 public:
-    ArcherTower(int r, int c);
+    ArcherTower(int r, int c, SDL_Texture* tex = nullptr);
     
     // Implementación de métodos virtuales
     void attack() override;

@@ -12,7 +12,7 @@ private:
     static const int BASE_COST = 75;         // Alto costo
 
 public:
-    ArtilleryTower(int r, int c);
+    ArtilleryTower(int r, int c, SDL_Texture* tex = nullptr);
     
     // Implementación de métodos virtuales
     void attack() override;

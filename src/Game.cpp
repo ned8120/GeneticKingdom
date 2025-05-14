@@ -17,6 +17,13 @@ bool Game::initialize() {
         return false;
     }
     
+    // Inicializar SDL_image
+    int imgFlags = IMG_INIT_PNG;
+    if (!(IMG_Init(imgFlags) & imgFlags)) {
+        std::cerr << "SDL_image no pudo inicializarse: " << IMG_GetError() << std::endl;
+        return false;
+    }
+    
     // Crear ventana
     window = SDL_CreateWindow(
         "Genetic Kingdom",
@@ -44,7 +51,7 @@ bool Game::initialize() {
     resources = new ResourceSystem(100); // 100 de oro inicial
     
     // Crear gestor de torres
-    towerManager = new TowerManager(resources);
+    towerManager = new TowerManager(resources, renderer);
     
     // Inicializar tiempo
     lastFrameTime = SDL_GetTicks();
@@ -152,5 +159,6 @@ void Game::clean() {
     
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+    IMG_Quit();
     SDL_Quit();
 }

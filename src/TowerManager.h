@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 #include "Tower.h"
 #include "ResourceSystem.h"
 
@@ -21,11 +22,20 @@ private:
     Tower* selectedTower;
     ResourceSystem* resources;
     
+    // Texturas para cada tipo de torre
+    SDL_Texture* archerTexture;
+    SDL_Texture* mageTexture;
+    SDL_Texture* artilleryTexture;
+    
     // Renders the tower selection UI
     void renderTowerMenu(SDL_Renderer* renderer) const;
     
 public:
-    TowerManager(ResourceSystem* res);
+    TowerManager(ResourceSystem* res, SDL_Renderer* renderer);
+    ~TowerManager();
+    
+    // Cargar texturas para las torres
+    bool loadTextures(SDL_Renderer* renderer);
     
     // Crear una nueva torre en la posición especificada
     bool createTower(int row, int col);

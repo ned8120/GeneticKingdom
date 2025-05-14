@@ -4,8 +4,47 @@
 #include "ArtilleryTower.h"
 #include <iostream>
 
-TowerManager::TowerManager(ResourceSystem* res) 
-    : selectedType(TowerType::NONE), selectedTower(nullptr), resources(res) {
+TowerManager::TowerManager(ResourceSystem* res, SDL_Renderer* renderer) 
+    : selectedType(TowerType::NONE), selectedTower(nullptr), resources(res),
+      archerTexture(nullptr), mageTexture(nullptr), artilleryTexture(nullptr) {
+    // Cargar texturas
+    loadTextures(renderer);
+}
+
+TowerManager::~TowerManager() {
+    // Liberar texturas
+    if (archerTexture) SDL_DestroyTexture(archerTexture);
+    if (mageTexture) SDL_DestroyTexture(mageTexture);
+    if (artilleryTexture) SDL_DestroyTexture(artilleryTexture);
+}
+
+bool TowerManager::loadTextures(SDL_Renderer* renderer) {
+    // Cargar las imágenes y escalarlas
+    SDL_Surface* surface = IMG_Load("images/arquero.png");
+    if (!surface) {
+        std::cerr << "No se pudo cargar la imagen arquero.png: " << IMG_GetError() << std::endl;
+        return false;
+    }
+    archerTexture = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_FreeSurface(surface);
+    
+    surface = IMG_Load("images/mago.png");
+    if (!surface) {
+        std::cerr << "No se pudo cargar la imagen mago.png: " << IMG_GetError() << std::endl;
+        return false;
+    }
+    mageTexture = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_FreeSurface(surface);
+    
+    surface = IMG_Load("images/artillero.png");
+    if (!surface) {
+        std::cerr << "No se pudo cargar la imagen artillero.png: " << IMG_GetError() << std::endl;
+        return false;
+    }
+    artilleryTexture = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_FreeSurface(surface);
+    
+    return archerTexture && mageTexture && artilleryTexture;
 }
 
 bool TowerManager::createTower(int row, int col) {
@@ -39,13 +78,13 @@ bool TowerManager::createTower(int row, int col) {
     // Crear la torre del tipo seleccionado
     switch (selectedType) {
         case TowerType::ARCHER:
-            towers.push_back(std::make_unique<ArcherTower>(row, col));
+            towers.push_back(std::make_unique<ArcherTower>(row, col, archerTexture));
             break;
         case TowerType::MAGE:
-            towers.push_back(std::make_unique<MageTower>(row, col));
+            towers.push_back(std::make_unique<MageTower>(row, col, mageTexture));
             break;
         case TowerType::ARTILLERY:
-            towers.push_back(std::make_unique<ArtilleryTower>(row, col));
+            towers.push_back(std::make_unique<ArtilleryTower>(row, col, artilleryTexture));
             break;
         default:
             return false;
@@ -117,27 +156,43 @@ void TowerManager::renderTowerMenu(SDL_Renderer* renderer) const {
     SDL_Rect mageButton = {50, 10, 30, 30};
     SDL_Rect artilleryButton = {90, 10, 30, 30};
     
-    // Colores según el tipo seleccionado
+    // Dibujar los botones con las miniaturas de las texturas
+    if (archerTexture) {
+        SDL_RenderCopy(renderer, archerTexture, NULL, &archerButton);
+    } else {
+        SDL_SetRenderDrawColor(renderer, 0, 100, 0, 255); // Verde oscuro para arqueros
+        SDL_RenderFillRect(renderer, &archerButton);
+    }
+    
+    if (mageTexture) {
+        SDL_RenderCopy(renderer, mageTexture, NULL, &mageButton);
+    } else {
+        SDL_SetRenderDrawColor(renderer, 0, 0, 200, 255); // Azul para magos
+        SDL_RenderFillRect(renderer, &mageButton);
+    }
+    
+    if (artilleryTexture) {
+        SDL_RenderCopy(renderer, artilleryTexture, NULL, &artilleryButton);
+    } else {
+        SDL_SetRenderDrawColor(renderer, 150, 0, 0, 255); // Rojo oscuro para artilleros
+        SDL_RenderFillRect(renderer, &artilleryButton);
+    }
+    
+    // Dibujar bordes para el tipo seleccionado
     if (selectedType == TowerType::ARCHER) {
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderDrawRect(renderer, &archerButton);
     }
-    SDL_SetRenderDrawColor(renderer, 0, 100, 0, 255); // Verde oscuro para arqueros
-    SDL_RenderFillRect(renderer, &archerButton);
     
     if (selectedType == TowerType::MAGE) {
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderDrawRect(renderer, &mageButton);
     }
-    SDL_SetRenderDrawColor(renderer, 0, 0, 200, 255); // Azul para magos
-    SDL_RenderFillRect(renderer, &mageButton);
     
     if (selectedType == TowerType::ARTILLERY) {
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderDrawRect(renderer, &artilleryButton);
     }
-    SDL_SetRenderDrawColor(renderer, 150, 0, 0, 255); // Rojo oscuro para artilleros
-    SDL_RenderFillRect(renderer, &artilleryButton);
     
     // Mostrar precios (esto sería texto renderizado en una versión más avanzada)
     std::cout << "Arquero: 25 oro | Mago: 50 oro | Artillero: 75 oro" << std::endl;
@@ -194,8 +249,7 @@ bool TowerManager::upgradeSelectedTower() {
     return false;
 }
 
-bool TowerManager::handleMouseClick(int x, int y, int /*gridSize*/) {
-    // La función sigue igual, solo cambiamos el nombre del parámetro
+bool TowerManager::handleMouseClick(int x, int y, int gridSize) {
     // Verificar si el clic fue en el menú de selección de torres
     if (y < 50) { // Altura del menú
         if (x < 40) { // Botón de arquero

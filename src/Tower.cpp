@@ -1,16 +1,26 @@
 #include "Tower.h"
 
-Tower::Tower(int r, int c, int initialCost) 
+Tower::Tower(int r, int c, int initialCost, SDL_Texture* tex) 
     : level(1), row(r), col(c), cost(initialCost), upgradeCost(initialCost/2),
-      attackTimer(0) {
+      attackTimer(0), texture(tex) {
     // Valores base serán asignados por las subclases
 }
 
+Tower::~Tower() {
+    // No destruimos la textura aquí porque la gestiona TowerManager
+}
+
 void Tower::render(SDL_Renderer* renderer, int gridSize) const {
-    // Dibuja la torre como un rectángulo del color correspondiente
-    SDL_Rect towerRect = {col * gridSize, row * gridSize, gridSize, gridSize};
-    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-    SDL_RenderFillRect(renderer, &towerRect);
+    // Dibujar la torre usando la textura si está disponible
+    if (texture) {
+        SDL_Rect destRect = {col * gridSize, row * gridSize, gridSize, gridSize};
+        SDL_RenderCopy(renderer, texture, NULL, &destRect);
+    } else {
+        // Método de respaldo usando color (como antes)
+        SDL_Rect towerRect = {col * gridSize, row * gridSize, gridSize, gridSize};
+        SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+        SDL_RenderFillRect(renderer, &towerRect);
+    }
     
     // Dibuja un indicador del nivel (líneas en la parte superior)
     for (int i = 0; i < level; i++) {
@@ -25,6 +35,7 @@ void Tower::render(SDL_Renderer* renderer, int gridSize) const {
     }
     
     // Dibuja borde
+    SDL_Rect towerRect = {col * gridSize, row * gridSize, gridSize, gridSize};
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Negro
     SDL_RenderDrawRect(renderer, &towerRect);
     

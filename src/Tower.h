@@ -2,6 +2,7 @@
 #define TOWER_H
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 #include <string>
 
 // Clase base abstracta para todas las torres
@@ -16,15 +17,18 @@ protected:
     int cost;           // Costo inicial de la torre
     int upgradeCost;    // Costo base para mejorar
 
-    // Color para renderizar la torre
+    // Textura de la torre
+    SDL_Texture* texture;
+    
+    // Color para renderizar la torre (como respaldo)
     SDL_Color color;
     
     // Tiempo transcurrido desde el último ataque
     int attackTimer;
 
 public:
-    Tower(int r, int c, int initialCost);
-    virtual ~Tower() = default;
+    Tower(int r, int c, int initialCost, SDL_Texture* tex);
+    virtual ~Tower();
     
     // Métodos comunes a todas las torres
     virtual void render(SDL_Renderer* renderer, int gridSize) const;
