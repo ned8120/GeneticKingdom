@@ -6,6 +6,7 @@
 #include "GameBoard.h"
 #include "ResourceSystem.h"
 #include "TowerManager.h"
+#include "EnemyManager.h"
 
 class Game {
 private:
@@ -16,6 +17,7 @@ private:
     GameBoard* board;
     ResourceSystem* resources;
     TowerManager* towerManager;
+    EnemyManager* enemyManager;  // Nuevo: gestor de enemigos
     
     // Tiempo para control de FPS y actualización
     Uint32 lastFrameTime;
@@ -27,6 +29,9 @@ private:
     
     // Método para renderizar interfaz
     void renderUI();
+    
+    // Modo de test (para generar enemigos manualmente)
+    bool testMode;
     
 public:
     Game();

@@ -43,6 +43,9 @@ public:
     // Obtiene el número de filas y columnas
     int getRows() const { return rows; }
     int getCols() const { return cols; }
+
+    SDL_Point getEntrancePoint() const { return entrance; }
+    SDL_Point getExitPoint() const { return exit; }
     
     // Obtiene el tipo de celda en una posición
     int getCellType(int r, int c) const;

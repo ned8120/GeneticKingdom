@@ -3,7 +3,7 @@
 
 Game::Game() : window(nullptr), renderer(nullptr), running(false), 
                board(nullptr), resources(nullptr), towerManager(nullptr),
-               lastFrameTime(0) {
+               enemyManager(nullptr), lastFrameTime(0), testMode(true) {
 }
 
 Game::~Game() {
@@ -53,6 +53,9 @@ bool Game::initialize() {
     // Crear gestor de torres
     towerManager = new TowerManager(resources, renderer);
     
+    // Crear gestor de enemigos
+    enemyManager = new EnemyManager(board, resources, renderer);
+    
     // Inicializar tiempo
     lastFrameTime = SDL_GetTicks();
     
@@ -76,6 +79,13 @@ void Game::handleEvents() {
     while (SDL_PollEvent(&e) != 0) {
         if (e.type == SDL_QUIT) {
             running = false;
+        } else if (e.type == SDL_KEYDOWN) {
+            // Teclas para pruebas
+            if (e.key.keysym.sym == SDLK_SPACE && testMode) {
+                enemyManager->spawnTestEnemies();
+            } else if (e.key.keysym.sym == SDLK_w && testMode) {
+                enemyManager->spawnWave();
+            }
         } else if (e.type == SDL_MOUSEBUTTONDOWN) {
             if (e.button.button == SDL_BUTTON_LEFT) {
                 int mouseX, mouseY;
@@ -121,6 +131,12 @@ void Game::update() {
     
     // Actualizar torres
     towerManager->update(deltaTime);
+    
+    // Actualizar enemigos
+    enemyManager->update(deltaTime);
+    
+    // Procesar ataques de torres a enemigos (se implementará después)
+    // enemyManager->processTowerAttacks(towerManager->getTowers());
 }
 
 void Game::render() {
@@ -133,6 +149,9 @@ void Game::render() {
     
     // Dibujar torres
     towerManager->render(renderer, GRID_SIZE);
+    
+    // Dibujar enemigos
+    enemyManager->render(renderer);
     
     // Dibujar interfaz de usuario
     renderUI();
@@ -149,6 +168,18 @@ void Game::renderUI() {
     
     // Por ahora, solo imprimimos el oro en la consola
     std::cout << "Oro: " << resources->getGold() << std::endl;
+    
+    // Información sobre oleadas (para la fase 3)
+    SDL_Rect waveRect = {SCREEN_WIDTH - 160, 50, 150, 30};
+    SDL_SetRenderDrawColor(renderer, 50, 50, 50, 200);
+    SDL_RenderFillRect(renderer, &waveRect);
+    
+    // Mostrar instrucciones de prueba
+    if (testMode) {
+        std::cout << "ESPACIO: generar enemigos de prueba | W: generar oleada" << std::endl;
+        std::cout << "Oleada actual: " << enemyManager->getCurrentWave() << std::endl;
+        std::cout << "Enemigos activos: " << enemyManager->getEnemyCount() << std::endl;
+    }
 }
 
 void Game::clean() {
@@ -156,6 +187,7 @@ void Game::clean() {
     delete board;
     delete resources;
     delete towerManager;
+    delete enemyManager;
     
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
