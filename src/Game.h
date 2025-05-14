@@ -4,6 +4,7 @@
 #include <SDL2/SDL.h>
 #include "GameBoard.h"
 #include "ResourceSystem.h"
+#include "TowerManager.h"
 
 class Game {
 private:
@@ -13,13 +14,15 @@ private:
     
     GameBoard* board;
     ResourceSystem* resources;
+    TowerManager* towerManager;
+    
+    // Tiempo para control de FPS y actualización
+    Uint32 lastFrameTime;
     
     // Constantes del juego
     const int SCREEN_WIDTH = 800;
     const int SCREEN_HEIGHT = 600;
-    
-    // Costos de torres
-    const int TOWER_COST = 25;
+    const int GRID_SIZE = 50;
     
     // Método para renderizar interfaz
     void renderUI();

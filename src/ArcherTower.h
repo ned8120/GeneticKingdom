@@ -1,0 +1,22 @@
+#ifndef ARCHER_TOWER_H
+#define ARCHER_TOWER_H
+
+#include "Tower.h"
+
+class ArcherTower : public Tower {
+private:
+    static const int BASE_DAMAGE = 10;      // Bajo daño
+    static const int BASE_RANGE = 150;      // Alto alcance
+    static const int BASE_ATTACK_SPEED = 500; // Ataque rápido (ms)
+    static const int BASE_SPECIAL_COOLDOWN = 10000; // 10 segundos
+    static const int BASE_COST = 25;        // Bajo costo
+
+public:
+    ArcherTower(int r, int c);
+    
+    // Implementación de métodos virtuales
+    void attack() override;
+    std::string getType() const override { return "Arquero"; }
+};
+
+#endif // ARCHER_TOWER_H
