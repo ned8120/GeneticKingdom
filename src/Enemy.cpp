@@ -7,7 +7,7 @@
 Enemy::Enemy(float startX, float startY, const std::vector<SDL_Point>& pathPoints, SDL_Texture* tex, int enemySize)
     : health(100), speed(30.0f), arrowResistance(0.0f), magicResistance(0.0f), artilleryResistance(0.0f),
       x(startX), y(startY), currentPathIndex(0), path(pathPoints), reachedEnd(false),
-      texture(tex), size(enemySize), goldValue(10), gameBoard(nullptr) {
+      texture(tex), size(enemySize), goldValue(10), gameBoard(nullptr), id(0), damageDealt(0.0f) {
     
     destRect = {static_cast<int>(x - size/2), static_cast<int>(y - size/2), size, size};
 }
@@ -133,6 +133,11 @@ int Enemy::takeDamage(int damage, std::string towerType) {
     // Aplicar daño
     health -= actualDamage;
     if (health < 0) health = 0;
+    
+    // Si el enemigo llega al final, registra daño al jugador para su fitness
+    if (hasReachedEnd()) {
+        damageDealt += 10.0f; // Valor arbitrario de daño al jugador
+    }
     
     // AÑADIR MÁS INFORMACIÓN DE DEPURACIÓN
     std::cout << "APLICANDO DAÑO: " << towerType << " → " << getType() 

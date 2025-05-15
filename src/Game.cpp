@@ -288,6 +288,88 @@ void Game::renderUI() {
         std::cout << "Oleada actual: " << enemyManager->getCurrentWave() << std::endl;
         std::cout << "Enemigos activos: " << enemyManager->getEnemyCount() << std::endl;
     }
+    
+    // NUEVO: Mostrar estadísticas genéticas
+    if (font) {
+        SDL_Rect geneticRect = {10, SCREEN_HEIGHT - 140, 400, 130};
+        SDL_SetRenderDrawColor(renderer, 50, 50, 50, 200);
+        SDL_RenderFillRect(renderer, &geneticRect);
+        
+        int textY = SCREEN_HEIGHT - 135;
+        int lineHeight = 18;
+        
+        // Línea 1: Generación actual
+        std::string genText = "Generacion: " + std::to_string(enemyManager->getCurrentGeneration());
+        SDL_Surface* surface = TTF_RenderText_Blended(font, genText.c_str(), {255, 255, 255, 255});
+        if (surface) {
+            SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+            if (texture) {
+                SDL_Rect textRect = {15, textY, surface->w, surface->h};
+                SDL_RenderCopy(renderer, texture, nullptr, &textRect);
+                SDL_DestroyTexture(texture);
+            }
+            SDL_FreeSurface(surface);
+        }
+        textY += lineHeight;
+        
+        // Línea 2: Oleada actual
+        std::string waveText = "Oleada: " + std::to_string(enemyManager->getCurrentWave());
+        surface = TTF_RenderText_Blended(font, waveText.c_str(), {255, 255, 255, 255});
+        if (surface) {
+            SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+            if (texture) {
+                SDL_Rect textRect = {15, textY, surface->w, surface->h};
+                SDL_RenderCopy(renderer, texture, nullptr, &textRect);
+                SDL_DestroyTexture(texture);
+            }
+            SDL_FreeSurface(surface);
+        }
+        textY += lineHeight;
+        
+        // Línea 3: Fitness
+        std::string fitnessText = "Fitness: Prom=" + std::to_string(enemyManager->getAverageFitness()).substr(0, 4) + 
+                                 " Mejor=" + std::to_string(enemyManager->getBestFitness()).substr(0, 4) + 
+                                 " Peor=" + std::to_string(enemyManager->getWorstFitness()).substr(0, 4);
+        surface = TTF_RenderText_Blended(font, fitnessText.c_str(), {255, 255, 255, 255});
+        if (surface) {
+            SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+            if (texture) {
+                SDL_Rect textRect = {15, textY, surface->w, surface->h};
+                SDL_RenderCopy(renderer, texture, nullptr, &textRect);
+                SDL_DestroyTexture(texture);
+            }
+            SDL_FreeSurface(surface);
+        }
+        textY += lineHeight;
+        
+        // Línea 4: Mutaciones
+        std::string mutText = "Tasa de mutacion: " + std::to_string(enemyManager->getMutationRate()).substr(0, 4) + 
+                              " Mutaciones: " + std::to_string(enemyManager->getMutationsOccurred());
+        surface = TTF_RenderText_Blended(font, mutText.c_str(), {255, 255, 255, 255});
+        if (surface) {
+            SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+            if (texture) {
+                SDL_Rect textRect = {15, textY, surface->w, surface->h};
+                SDL_RenderCopy(renderer, texture, nullptr, &textRect);
+                SDL_DestroyTexture(texture);
+            }
+            SDL_FreeSurface(surface);
+        }
+        textY += lineHeight;
+        
+        // Línea 5: Enemigos vivos
+        std::string enemyText = "Enemigos activos: " + std::to_string(enemyManager->getEnemyCount());
+        surface = TTF_RenderText_Blended(font, enemyText.c_str(), {255, 255, 255, 255});
+        if (surface) {
+            SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+            if (texture) {
+                SDL_Rect textRect = {15, textY, surface->w, surface->h};
+                SDL_RenderCopy(renderer, texture, nullptr, &textRect);
+                SDL_DestroyTexture(texture);
+            }
+            SDL_FreeSurface(surface);
+        }
+    }
 }
 
 void Game::clean() {

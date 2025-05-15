@@ -27,6 +27,10 @@ EnemyManager::EnemyManager(GameBoard* board, ResourceSystem* res, SDL_Renderer* 
     
     // Cargar texturas
     loadTextures(renderer);
+    
+    // Inicializar el algoritmo genético y el contador de ID
+    geneticAlgorithm = GeneticAlgorithm(20, 0.1f, 0.7f, 2);
+    nextEnemyId = 1;
 }
 
 EnemyManager::~EnemyManager() {
@@ -310,25 +314,113 @@ void EnemyManager::spawnWave() {
     currentWave++;
     std::cout << "¡Nueva oleada! Oleada #" << currentWave << std::endl;
     
-    // Aumentar dificultad con cada oleada
+    // Actualizar la dificultad con cada oleada
     enemiesPerWave = 5 + currentWave;
     
-    // Generar enemigos de tipos aleatorios
-    for (int i = 0; i < enemiesPerWave; i++) {
-        // Elegir un tipo de enemigo aleatoriamente
-        EnemyType type = static_cast<EnemyType>(enemyTypeDist(rng));
+    // Si no es la primera oleada, evolucionar la población
+    if (currentWave > 1) {
+        // Procesar los datos de rendimiento y actualizar fitness
+        for (auto& data : enemyPerformanceData) {
+            geneticAlgorithm.updateFitness(data.genome, data.progressMade, data.damageDealt, data.timeAlive);
+        }
         
+        // Evolucionar la población
+        geneticAlgorithm.evolve();
+        
+        // Limpiar datos de rendimiento para la siguiente oleada
+        enemyPerformanceData.clear();
+    }
+    
+    // Generar enemigos basados en genomas
+    const std::vector<Genome>& population = geneticAlgorithm.getPopulation();
+    int enemiesToSpawn = std::min(enemiesPerWave, static_cast<int>(population.size()));
+    
+    std::cout << "Generando " << enemiesToSpawn << " enemigos para la oleada #" << currentWave << std::endl;
+    
+    for (int i = 0; i < enemiesToSpawn; i++) {
         // Elegir un camino aleatorio
         int pathIndex = pathDist(rng);
         if (pathIndex >= paths.size()) pathIndex = 0;
         
-        // Crear enemigo y agregarlo a la lista
-        enemies.push_back(createEnemy(type, paths[pathIndex]));
+        // Crear y registrar el enemigo
+        auto enemy = createEnemyFromGenome(population[i], paths[pathIndex]);
         
-        // Para evitar que aparezcan todos juntos, esperaríamos un tiempo entre cada enemigo
-        // En una implementación completa, esto se manejaría con un temporizador
+        // Registrar el genoma para este enemigo
+        EnemyPerformance perf;
+        perf.id = nextEnemyId;
+        perf.genome = population[i];
+        perf.progressMade = 0.0f;
+        perf.damageDealt = 0.0f;
+        perf.timeAlive = 0.0f;
+        enemyPerformanceData.push_back(perf);
+        
+        // Asignar ID al enemigo y añadirlo a la lista
+        enemy->setId(nextEnemyId++);
+        enemies.push_back(std::move(enemy));
     }
 }
+
+
+
+std::unique_ptr<Enemy> EnemyManager::createEnemyFromGenome(const Genome& genome, const std::vector<SDL_Point>& path) {
+    std::unique_ptr<Enemy> enemy;
+    
+    // Crear el tipo base de enemigo según el genoma
+    switch (genome.enemyType) {
+        case 0: // Ogro
+            enemy = std::make_unique<OgreEnemy>(entrancePoint.x, entrancePoint.y, path, ogreTexture);
+            break;
+        case 1: // Elfo Oscuro
+            enemy = std::make_unique<DarkElfEnemy>(entrancePoint.x, entrancePoint.y, path, darkElfTexture);
+            break;
+        case 2: // Harpía
+            enemy = std::make_unique<HarpyEnemy>(entrancePoint.x, entrancePoint.y, path, harpyTexture);
+            break;
+        case 3: // Mercenario
+            enemy = std::make_unique<MercenaryEnemy>(entrancePoint.x, entrancePoint.y, path, mercenaryTexture);
+            break;
+        default:
+            enemy = std::make_unique<OgreEnemy>(entrancePoint.x, entrancePoint.y, path, ogreTexture);
+    }
+    
+    // Aplicar atributos del genoma
+    enemy->setHealth(static_cast<int>(genome.health));
+    enemy->setSpeed(genome.speed);
+    enemy->setArrowResistance(genome.arrowResistance);
+    enemy->setMagicResistance(genome.magicResistance);
+    enemy->setArtilleryResistance(genome.artilleryResistance);
+    
+    std::cout << "Enemigo creado de genoma: Tipo=" << genome.enemyType 
+              << ", Vida=" << genome.health 
+              << ", Velocidad=" << genome.speed 
+              << ", Resistencias=" << genome.arrowResistance << "/" 
+              << genome.magicResistance << "/" 
+              << genome.artilleryResistance << std::endl;
+    
+    return enemy;
+}
+
+
+void EnemyManager::registerEnemyDeath(int enemyId, float progressMade, float damageDealt, float timeAlive) {
+    // Encontrar el enemigo en los datos de rendimiento
+    for (auto& data : enemyPerformanceData) {
+        if (data.id == enemyId) {
+            // Actualizar datos de rendimiento
+            data.progressMade = progressMade;
+            data.damageDealt = damageDealt;
+            data.timeAlive = timeAlive;
+            
+            std::cout << "Rendimiento registrado para enemigo #" << enemyId 
+                      << ": Progreso=" << progressMade 
+                      << ", Daño=" << damageDealt 
+                      << ", Tiempo=" << timeAlive << std::endl;
+            return;
+        }
+    }
+    
+    std::cerr << "Error: Enemigo #" << enemyId << " no encontrado en los datos de rendimiento" << std::endl;
+}
+
 
 void EnemyManager::update(int deltaTime) {
     // Actualizar temporizador de oleadas
@@ -341,19 +433,40 @@ void EnemyManager::update(int deltaTime) {
     // Actualizar todos los enemigos
     for (auto& enemy : enemies) {
         enemy->update(deltaTime);
+        
+        // Actualizar tiempo de vida para el cálculo de fitness
+        for (auto& data : enemyPerformanceData) {
+            if (data.id == enemy->getId()) {
+                data.timeAlive += deltaTime;
+                // Actualizar el progreso en el camino
+                data.progressMade = enemy->getPathProgress();
+                break;
+            }
+        }
     }
     
     // Eliminar enemigos muertos y procesar oro
     auto it = enemies.begin();
     while (it != enemies.end()) {
         if (!(*it)->isAlive()) {
+            // Registrar rendimiento final
+            registerEnemyDeath((*it)->getId(), 
+                              (*it)->getPathProgress(), 
+                              (*it)->getDamageDealt(), 
+                              0.0f); // El tiempo ya se ha acumulado
+            
             // Añadir oro al matar un enemigo
             resources->addGold((*it)->getGoldValue());
-            std::cout << "Enemigo eliminado. +" << (*it)->getGoldValue() << " oro." << std::endl;
+            std::cout << "Enemigo #" << (*it)->getId() << " eliminado. +" << (*it)->getGoldValue() << " oro." << std::endl;
             it = enemies.erase(it);
         } else if ((*it)->hasReachedEnd()) {
-            // El enemigo llegó al final (daño al jugador)
-            std::cout << "¡Un enemigo ha cruzado el puente!" << std::endl;
+            // El enemigo llegó al final - éxito máximo para su fitness
+            registerEnemyDeath((*it)->getId(), 
+                              1.0f, // Progreso máximo
+                              (*it)->getDamageDealt(), 
+                              0.0f); // El tiempo ya se ha acumulado
+            
+            std::cout << "¡Enemigo #" << (*it)->getId() << " ha cruzado el puente!" << std::endl;
             it = enemies.erase(it);
             // Aquí se podría implementar un sistema de vidas
         } else {

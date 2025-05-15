@@ -10,6 +10,7 @@
 #include "GameBoard.h"
 #include "ResourceSystem.h"
 #include "AStar.h"
+#include "GeneticAlgorithm.h"
 
 
 
@@ -26,6 +27,22 @@ enum class EnemyType {
 
 class EnemyManager {
 private:
+    GeneticAlgorithm geneticAlgorithm;
+
+    struct EnemyPerformance {
+        int id;
+        Genome genome;
+        float progressMade;
+        float damageDealt;
+        float timeAlive;
+    };  
+
+    std::vector<EnemyPerformance> enemyPerformanceData;
+    int nextEnemyId;
+
+    // Método para crear un enemigo basado en un genoma
+    std::unique_ptr<Enemy> createEnemyFromGenome(const Genome& genome, const std::vector<SDL_Point>& path);
+
     std::vector<std::unique_ptr<Enemy>> enemies;
     std::vector<std::vector<SDL_Point>> paths;  // Caminos posibles
     
@@ -94,6 +111,20 @@ public:
     
     // Método para pruebas: generar un enemigo de cada tipo
     void spawnTestEnemies();
+
+    // Obtener estadísticas del algoritmo genético
+    int getCurrentGeneration() const { return geneticAlgorithm.getGeneration(); }
+    int getMutationsOccurred() const { return geneticAlgorithm.getMutationsOccurred(); }
+    float getAverageFitness() const { return geneticAlgorithm.getAverageFitness(); }
+    float getBestFitness() const { return geneticAlgorithm.getBestFitness(); }
+    float getWorstFitness() const { return geneticAlgorithm.getWorstFitness(); }
+    float getMutationRate() const { return geneticAlgorithm.getMutationRate(); }
+        
+    // Registrar rendimiento de un enemigo
+    void registerEnemyDeath(int enemyId, float progressMade, float damageDealt, float timeAlive);
+
+    // Implementación de spawnEnemyFromGenome
+    void spawnEnemyFromGenome(const Genome& genome);
 };
 
 #endif // ENEMY_MANAGER_H

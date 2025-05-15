@@ -36,6 +36,10 @@ protected:
     // Referencia al tablero para recalcular caminos
     GameBoard* gameBoard = nullptr;
 
+
+    int id;                    // ID único para el enemigo
+    float damageDealt;         // Daño total causado al jugador
+
 public:
     Enemy(float startX, float startY, const std::vector<SDL_Point>& pathPoints, SDL_Texture* tex, int enemySize = 40);
     virtual ~Enemy();
@@ -73,6 +77,21 @@ public:
 
     // Establecer el tablero para recálculos de camino
     void setGameBoard(GameBoard* board) { gameBoard = board; }
+
+    // Getters y setters para ID
+    void setId(int enemyId) { id = enemyId; }
+    int getId() const { return id; }
+        
+    // Getters y setters para estadísticas genéticas
+    void setHealth(int newHealth) { health = newHealth; }
+    void setSpeed(float newSpeed) { speed = newSpeed; }
+    void setArrowResistance(float value) { arrowResistance = value; }
+    void setMagicResistance(float value) { magicResistance = value; }
+    void setArtilleryResistance(float value) { artilleryResistance = value; }
+        
+    // Estadísticas para fitness
+    float getDamageDealt() const { return damageDealt; }
+    void addDamageDealt(float damage) { damageDealt += damage; }
 };
 
 #endif // ENEMY_H
