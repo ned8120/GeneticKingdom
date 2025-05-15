@@ -7,6 +7,8 @@
 #include "Game.h"  // Añadir este include
 #include <iostream>
 #include <algorithm>  // Para std::sort
+#include <map>
+
 
 
 EnemyManager::EnemyManager(GameBoard* board, ResourceSystem* res, SDL_Renderer* renderer)
@@ -319,9 +321,34 @@ void EnemyManager::spawnWave() {
     
     // Si no es la primera oleada, evolucionar la población
     if (currentWave > 1) {
-        // Procesar los datos de rendimiento y actualizar fitness
+        // CORRECCIÓN: Crear un mapa para transferir los datos de fitness a la población real
+        std::map<int, float> fitnessMap;  // Mapa de tipo de enemigo -> fitness
+        std::map<int, int> countMap;      // Contador para promediar
+        
+        // Procesar los datos de rendimiento
         for (auto& data : enemyPerformanceData) {
-            geneticAlgorithm.updateFitness(data.genome, data.progressMade, data.damageDealt, data.timeAlive);
+            // Calcular fitness
+            float fitness = data.progressMade * 10.0f + (data.damageDealt / 100.0f) + (data.timeAlive / 1000.0f);
+            
+            std::cout << "DEBUG - UpdateFitness con valores: progreso=" << data.progressMade 
+                     << ", daño=" << data.damageDealt 
+                     << ", tiempo=" << data.timeAlive << std::endl;
+            std::cout << "Fitness actualizado: " << fitness << std::endl;
+            
+            // Acumular fitness por tipo de enemigo para después transferirlo a la población
+            int enemyType = data.genome.enemyType;
+            fitnessMap[enemyType] += fitness;
+            countMap[enemyType]++;
+        }
+        
+        // CORRECCIÓN: Aplicar el fitness a la población real
+        std::vector<Genome>& population = geneticAlgorithm.getPopulationRef();
+        for (auto& genome : population) {
+            int type = genome.enemyType;
+            if (countMap[type] > 0) {
+                // Asignar el fitness promedio para este tipo de enemigo
+                genome.fitness = fitnessMap[type] / countMap[type];
+            }
         }
         
         // Evolucionar la población

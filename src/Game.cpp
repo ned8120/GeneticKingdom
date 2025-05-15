@@ -1,5 +1,7 @@
 #include "Game.h"
 #include <iostream>
+#include <sstream>
+#include <iomanip>
 
 Game::Game() : window(nullptr), renderer(nullptr), running(false), 
                board(nullptr), resources(nullptr), towerManager(nullptr),
@@ -289,7 +291,7 @@ void Game::renderUI() {
         std::cout << "Enemigos activos: " << enemyManager->getEnemyCount() << std::endl;
     }
     
-    // NUEVO: Mostrar estadísticas genéticas
+    // Mostrar estadísticas genéticas
     if (font) {
         SDL_Rect geneticRect = {10, SCREEN_HEIGHT - 140, 400, 130};
         SDL_SetRenderDrawColor(renderer, 50, 50, 50, 200);
@@ -326,10 +328,17 @@ void Game::renderUI() {
         }
         textY += lineHeight;
         
-        // Línea 3: Fitness
-        std::string fitnessText = "Fitness: Prom=" + std::to_string(enemyManager->getAverageFitness()).substr(0, 4) + 
-                                 " Mejor=" + std::to_string(enemyManager->getBestFitness()).substr(0, 4) + 
-                                 " Peor=" + std::to_string(enemyManager->getWorstFitness()).substr(0, 4);
+        // Línea 3: Fitness - VERSIÓN CORREGIDA
+        char fitnessBuffer[100];
+        float avgFitness = enemyManager->getAverageFitness();
+        float bestFitness = enemyManager->getBestFitness();
+        float worstFitness = enemyManager->getWorstFitness();
+        
+        // Formatear con precisión de 2 decimales
+        sprintf(fitnessBuffer, "Fitness: Prom=%.2f Mejor=%.2f Peor=%.2f", 
+                avgFitness, bestFitness, worstFitness);
+        std::string fitnessText = fitnessBuffer;
+        
         surface = TTF_RenderText_Blended(font, fitnessText.c_str(), {255, 255, 255, 255});
         if (surface) {
             SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
@@ -357,7 +366,7 @@ void Game::renderUI() {
         }
         textY += lineHeight;
         
-        // Línea 5: Enemigos vivos
+        // Línea 5: Enemigos activos
         std::string enemyText = "Enemigos activos: " + std::to_string(enemyManager->getEnemyCount());
         surface = TTF_RenderText_Blended(font, enemyText.c_str(), {255, 255, 255, 255});
         if (surface) {

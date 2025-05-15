@@ -80,6 +80,9 @@ public:
     
     // Actualizar la configuración
     void setMutationRate(float rate) { mutationRate = rate; }
+
+    std::vector<Genome>& getPopulationRef() { return population; }
+
 };
 
 #endif // GENETIC_ALGORITHM_H

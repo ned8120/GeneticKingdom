@@ -81,19 +81,26 @@ void GeneticAlgorithm::initializeGenome(Genome& genome, int enemyType) {
 }
 
 void GeneticAlgorithm::updateFitness(Genome& genome, float progressMade, float damageDealt, float timeAlive) {
-    // Fórmula de fitness: 
-    // - progressMade: qué tan lejos llegó en el camino (0.0 a 1.0)
-    // - damageDealt: daño causado a las torres o al jugador
-    // - timeAlive: tiempo que sobrevivió
+    // Imprimir valores de entrada para depuración
+    std::cout << "DEBUG - UpdateFitness con valores: progreso=" << progressMade 
+              << ", daño=" << damageDealt 
+              << ", tiempo=" << timeAlive << std::endl;
+    
+    // Verifica que al menos uno de los valores no sea cero para asegurar cálculo de fitness
+    if (progressMade <= 0.0f && damageDealt <= 0.0f && timeAlive <= 0.0f) {
+        std::cout << "ADVERTENCIA: Todos los valores de fitness son 0 o negativos!" << std::endl;
+    }
     
     // Ejemplo de cálculo de fitness: priorizar el progreso hacia el puente
     float fitness = progressMade * 10.0f + (damageDealt / 100.0f) + (timeAlive / 1000.0f);
     
+    // Asegurar que el fitness nunca sea negativo
+    fitness = std::max(0.0f, fitness);
+    
     // Almacenar el nuevo fitness
     genome.fitness = fitness;
     
-    std::cout << "Fitness actualizado: " << fitness << " (progreso: " << progressMade 
-              << ", daño: " << damageDealt << ", tiempo: " << timeAlive << ")" << std::endl;
+    std::cout << "Fitness actualizado: " << fitness << std::endl;
 }
 
 void GeneticAlgorithm::evolve() {
@@ -103,6 +110,8 @@ void GeneticAlgorithm::evolve() {
     
     // 1. Calcular estadísticas antes de evolucionar
     updateStatistics();
+    std::cout << "DEBUG - Antes de evolución: Fitness Prom=" << averageFitness 
+              << ", Mejor=" << bestFitness << ", Peor=" << worstFitness << std::endl;
     
     // 2. Ordenar la población por fitness (de mayor a menor)
     std::sort(population.begin(), population.end(), 
@@ -136,6 +145,8 @@ void GeneticAlgorithm::evolve() {
     
     // 4. Actualizar estadísticas después de evolucionar
     updateStatistics();
+    std::cout << "DEBUG - Después de evolución: Fitness Prom=" << averageFitness 
+              << ", Mejor=" << bestFitness << ", Peor=" << worstFitness << std::endl;
     
     // Imprimir información
     std::cout << "Evolución completada. Generación " << currentGeneration 
@@ -258,23 +269,42 @@ void GeneticAlgorithm::updateStatistics() {
         averageFitness = 0.0f;
         bestFitness = 0.0f;
         worstFitness = 0.0f;
+        std::cout << "ADVERTENCIA: Población vacía al calcular estadísticas!" << std::endl;
         return;
     }
     
+    // Imprimir algunos fitness para depuración
+    for (size_t i = 0; i < population.size(); i++) {
+        std::cout << "DEBUG - Genoma " << i << " con fitness: " << population[i].fitness << std::endl;
+    }
+    
     // Calcular fitness promedio
-    float totalFitness = std::accumulate(population.begin(), population.end(), 0.0f,
-                                       [](float sum, const Genome& genome) {
-                                           return sum + genome.fitness;
-                                       });
+    float totalFitness = 0.0f;
+    for (const auto& genome : population) {
+        totalFitness += genome.fitness;
+    }
     
     averageFitness = totalFitness / population.size();
     
     // Encontrar mejor y peor fitness
-    auto [minIt, maxIt] = std::minmax_element(population.begin(), population.end(),
-                                            [](const Genome& a, const Genome& b) {
-                                                return a.fitness < b.fitness;
-                                            });
+    bestFitness = 0.0f;
+    worstFitness = std::numeric_limits<float>::max();
     
-    bestFitness = maxIt->fitness;
-    worstFitness = minIt->fitness;
+    for (const auto& genome : population) {
+        if (genome.fitness > bestFitness) {
+            bestFitness = genome.fitness;
+        }
+        if (genome.fitness < worstFitness && genome.fitness > 0.0f) {
+            worstFitness = genome.fitness;
+        }
+    }
+    
+    // Si todos tienen fitness 0, hacer que worstFitness sea 0
+    if (worstFitness == std::numeric_limits<float>::max()) {
+        worstFitness = 0.0f;
+    }
+    
+    std::cout << "ESTADÍSTICAS ACTUALIZADAS: Promedio=" << averageFitness 
+              << ", Mejor=" << bestFitness 
+              << ", Peor=" << worstFitness << std::endl;
 }
