@@ -1,11 +1,13 @@
 #include "Enemy.h"
+#include "GameBoard.h"  // Include the full GameBoard definition
+#include "AStar.h"      // Include for A* pathfinding
 #include <cmath>
 #include <iostream>
 
 Enemy::Enemy(float startX, float startY, const std::vector<SDL_Point>& pathPoints, SDL_Texture* tex, int enemySize)
     : health(100), speed(30.0f), arrowResistance(0.0f), magicResistance(0.0f), artilleryResistance(0.0f),
       x(startX), y(startY), currentPathIndex(0), path(pathPoints), reachedEnd(false),
-      texture(tex), size(enemySize), goldValue(10) {
+      texture(tex), size(enemySize), goldValue(10), gameBoard(nullptr) {
     
     destRect = {static_cast<int>(x - size/2), static_cast<int>(y - size/2), size, size};
 }
@@ -15,7 +17,7 @@ Enemy::~Enemy() {
 }
 
 void Enemy::update(int deltaTime) {
-    if (!isAlive() || reachedEnd || path.empty() || currentPathIndex >= path.size()) {
+    if (!isAlive() || reachedEnd || path.empty() || currentPathIndex >= static_cast<int>(path.size())) {
         return;
     }
     
@@ -32,7 +34,7 @@ void Enemy::update(int deltaTime) {
         currentPathIndex++;
         
         // Si hemos llegado al final del camino
-        if (currentPathIndex >= path.size()) {
+        if (currentPathIndex >= static_cast<int>(path.size())) {
             reachedEnd = true;
             return;
         }
@@ -153,4 +155,48 @@ void Enemy::setPath(const std::vector<SDL_Point>& newPath) {
     path = newPath;
     currentPathIndex = 0;
     reachedEnd = false;
+}
+
+void Enemy::recalculatePath(GameBoard* board) {
+    if (!board || path.empty()) return;
+    
+    // Convertir posición actual a coordenadas de grid
+    int gridSize = 50;
+    int currentGridX = static_cast<int>(x) / gridSize;
+    int currentGridY = static_cast<int>(y) / gridSize;
+    
+    // Obtener punto final (destino)
+    SDL_Point finalGridPoint = {
+        path.back().x / gridSize,
+        path.back().y / gridSize
+    };
+    
+    // Función lambda para verificar si una celda es caminable
+    auto isWalkable = [board](int x, int y) {
+        return board->isCellWalkable(x, y);
+    };
+    
+    // Recalcular camino con A*
+    std::vector<SDL_Point> newGridPath = AStar::findPath(
+        isWalkable, {currentGridX, currentGridY}, finalGridPoint, 
+        board->getCols(), board->getRows());
+    
+    if (newGridPath.empty()) {
+        std::cout << "No se pudo recalcular camino para " << getType() << std::endl;
+        return;
+    }
+    
+    // Convertir a coordenadas de píxeles
+    std::vector<SDL_Point> newPixelPath;
+    for (const SDL_Point& gridPoint : newGridPath) {
+        SDL_Point pixelPos = {
+            gridPoint.x * gridSize + gridSize/2,
+            gridPoint.y * gridSize + gridSize/2
+        };
+        newPixelPath.push_back(pixelPos);
+    }
+    
+    // Establecer nuevo camino
+    setPath(newPixelPath);
+    std::cout << "Camino recalculado para " << getType() << " con " << newPixelPath.size() << " puntos" << std::endl;
 }

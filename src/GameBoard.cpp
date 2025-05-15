@@ -181,3 +181,15 @@ int GameBoard::getCellType(int r, int c) const {
     }
     return -1; // Fuera de límites
 }
+
+bool GameBoard::isCellWalkable(int x, int y) const {
+    // Verificar límites
+    if (x < 0 || x >= cols || y < 0 || y >= rows) {
+        return false;
+    }
+    
+    // Celda es caminable si es un camino (1) o entrada/salida
+    return grid[y][x] == 1 || 
+           (x == entrance.x && y == entrance.y) || 
+           (x == exit.x && y == exit.y);
+}

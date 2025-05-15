@@ -9,6 +9,9 @@
 #include "Enemy.h"
 #include "GameBoard.h"
 #include "ResourceSystem.h"
+#include "AStar.h"
+
+
 
 // Forward declaration de la clase Tower
 class Tower;
@@ -52,6 +55,16 @@ private:
     // Crear un nuevo enemigo según el tipo
     std::unique_ptr<Enemy> createEnemy(EnemyType type, const std::vector<SDL_Point>& path);
     
+    // Genera caminos usando A*
+    void generatePathsWithAStar(GameBoard* board);
+
+    // Genera caminos alternativos
+    void generateAlternativePaths(GameBoard* board, SDL_Point entrance, SDL_Point exit);
+
+    // Verifica si un camino es suficientemente diferente de los existentes
+    bool isPathSufficientlyDifferent(const std::vector<SDL_Point>& newPath);
+
+
 public:
     EnemyManager(GameBoard* board, ResourceSystem* res, SDL_Renderer* renderer);
     ~EnemyManager();

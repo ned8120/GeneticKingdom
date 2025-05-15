@@ -6,6 +6,10 @@
 #include <vector>
 #include <string>
 
+// Forward declaration - this tells the compiler that GameBoard exists
+// without needing to include the full header
+class GameBoard;
+
 class Enemy {
 protected:
     // Atributos básicos
@@ -28,6 +32,9 @@ protected:
     
     // Valor al morir
     int goldValue;            // Cantidad de oro que da al morir
+
+    // Referencia al tablero para recalcular caminos
+    GameBoard* gameBoard = nullptr;
 
 public:
     Enemy(float startX, float startY, const std::vector<SDL_Point>& pathPoints, SDL_Texture* tex, int enemySize = 40);
@@ -58,9 +65,14 @@ public:
     // Método virtual para obtener el tipo específico
     virtual std::string getType() const = 0;
 
-
+    // Método para obtener el progreso en el camino
     float getPathProgress() const { return static_cast<float>(currentPathIndex) / path.size(); }
 
+    // Recalcular camino usando A*
+    void recalculatePath(GameBoard* board);
+
+    // Establecer el tablero para recálculos de camino
+    void setGameBoard(GameBoard* board) { gameBoard = board; }
 };
 
 #endif // ENEMY_H

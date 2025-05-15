@@ -216,6 +216,10 @@ void Game::handleEvents() {
                         std::cout << "Torre colocada en (" 
                                   << gridPos.y << "," << gridPos.x 
                                   << "). Oro restante: " << resources->getGold() << std::endl;
+                        
+                        // MODIFICACIÓN PARA A*: Regenerar caminos cuando se coloca una torre
+                        // Esto hace que los enemigos recalculen sus rutas cuando hay un nuevo obstáculo
+                        enemyManager->generatePaths(board);
                     }
                 }
             }

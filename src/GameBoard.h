@@ -49,6 +49,9 @@ public:
     
     // Obtiene el tipo de celda en una posición
     int getCellType(int r, int c) const;
+
+    // Verifica si una celda es caminable (camino o entrada/salida)
+    bool isCellWalkable(int x, int y) const;
 };
 
 #endif // GAMEBOARD_H
