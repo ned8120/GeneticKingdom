@@ -1,5 +1,6 @@
 #include "Enemy.h"
 #include <cmath>
+#include <iostream>
 
 Enemy::Enemy(float startX, float startY, const std::vector<SDL_Point>& pathPoints, SDL_Texture* tex, int enemySize)
     : health(100), speed(30.0f), arrowResistance(0.0f), magicResistance(0.0f), artilleryResistance(0.0f),
@@ -70,35 +71,43 @@ void Enemy::render(SDL_Renderer* renderer) const {
     if (texture) {
         SDL_RenderCopy(renderer, texture, NULL, &destRect);
     } else {
-        // Método de respaldo usando un rectángulo coloreado
+        // Método alternativo usando un rectángulo de color
         SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); // Rojo por defecto
         SDL_RenderFillRect(renderer, &destRect);
     }
     
-    // Dibujar barra de vida
+    // MEJORADO: Asegúrate de que la barra de vida sea muy visible
     int healthBarWidth = size;
-    int healthBarHeight = 5;
+    int healthBarHeight = 10; // Bien visible
     float healthPercentage = static_cast<float>(health) / 100.0f;
     
-    // Fondo de la barra de vida (gris)
+    // Fondo de la barra de vida (gris oscuro)
     SDL_Rect healthBarBg = {
         destRect.x,
-        destRect.y - 10,
+        destRect.y - 15, // Un poco más arriba para que se vea bien
         healthBarWidth,
         healthBarHeight
     };
-    SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255);
+    SDL_SetRenderDrawColor(renderer, 80, 80, 80, 255);
     SDL_RenderFillRect(renderer, &healthBarBg);
     
-    // Barra de vida actual (verde)
+    // Barra de vida actual (verde a rojo basado en la vida)
     SDL_Rect healthBarFg = {
         destRect.x,
-        destRect.y - 10,
+        destRect.y - 15,
         static_cast<int>(healthBarWidth * healthPercentage),
         healthBarHeight
     };
-    SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+    
+    // Color dinámico: verde (100% vida) -> amarillo (50% vida) -> rojo (0% vida)
+    Uint8 r = static_cast<Uint8>((1.0f - healthPercentage) * 255);
+    Uint8 g = static_cast<Uint8>(healthPercentage * 255);
+    SDL_SetRenderDrawColor(renderer, r, g, 0, 255);
     SDL_RenderFillRect(renderer, &healthBarFg);
+    
+    // Borde negro para mejor visibilidad
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderDrawRect(renderer, &healthBarBg);
 }
 
 int Enemy::takeDamage(int damage, std::string towerType) {
@@ -116,9 +125,20 @@ int Enemy::takeDamage(int damage, std::string towerType) {
     // Calcular daño real después de aplicar resistencia
     int actualDamage = static_cast<int>(damage * (1.0f - resistance));
     
+    // Guardar valor anterior de vida para depuración
+    int oldHealth = health;
+    
     // Aplicar daño
     health -= actualDamage;
     if (health < 0) health = 0;
+    
+    // AÑADIR MÁS INFORMACIÓN DE DEPURACIÓN
+    std::cout << "APLICANDO DAÑO: " << towerType << " → " << getType() 
+              << " | Daño base: " << damage 
+              << " | Resistencia: " << resistance 
+              << " | Daño real: " << actualDamage 
+              << " | Vida: " << oldHealth << " → " << health 
+              << " (" << (oldHealth > 0 ? (health * 100 / oldHealth) : 0) << "% restante)" << std::endl;
     
     return actualDamage;
 }

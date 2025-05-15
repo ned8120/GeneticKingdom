@@ -62,14 +62,14 @@ void Tower::render(SDL_Renderer* renderer, int gridSize) const {
 }
 
 void Tower::update(int deltaTime) {
-    // Actualizar temporizador de ataque
+    // Solo incrementar el temporizador, sin atacar automáticamente
     attackTimer += deltaTime;
     
-    // Si ha pasado suficiente tiempo, la torre puede atacar
-    if (attackTimer >= attackSpeed) {
-        attack();
-        attackTimer = 0; // Reiniciar temporizador
-    }
+    // Eliminar o comentar esta parte:
+    // if (attackTimer >= attackSpeed) {
+    //     attack();
+    //     attackTimer = 0;
+    // }
 }
 
 bool Tower::upgrade() {

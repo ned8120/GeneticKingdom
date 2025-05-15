@@ -12,6 +12,7 @@
 
 // Forward declaration de la clase Tower
 class Tower;
+class Game;  // Añadir esta línea
 
 enum class EnemyType {
     OGRE,
@@ -71,7 +72,7 @@ public:
     void render(SDL_Renderer* renderer) const;
     
     // Comprobar colisiones y daño desde torres
-    void processTowerAttacks(const std::vector<std::unique_ptr<Tower>>& towers);
+    void processTowerAttacks(const std::vector<std::unique_ptr<Tower>>& towers, Game* game = nullptr);
     
     // Obtener estadísticas
     int getEnemyCount() const { return enemies.size(); }

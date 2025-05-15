@@ -57,6 +57,9 @@ public:
     
     // Intentar mejorar la torre seleccionada
     bool upgradeSelectedTower();
+
+    const std::vector<std::unique_ptr<Tower>>& getTowers() const { return towers; }
+    // Método para comprobar si la torre puede atacar
     
     // Manejar clics de ratón en la interfaz
     bool handleMouseClick(int x, int y, int gridSize);

@@ -3,7 +3,8 @@
 
 Game::Game() : window(nullptr), renderer(nullptr), running(false), 
                board(nullptr), resources(nullptr), towerManager(nullptr),
-               enemyManager(nullptr), lastFrameTime(0), testMode(true) {
+               enemyManager(nullptr), lastFrameTime(0), testMode(true),
+               font(nullptr) {
 }
 
 Game::~Game() {
@@ -22,6 +23,19 @@ bool Game::initialize() {
     if (!(IMG_Init(imgFlags) & imgFlags)) {
         std::cerr << "SDL_image no pudo inicializarse: " << IMG_GetError() << std::endl;
         return false;
+    }
+    
+    // Inicializar SDL_ttf
+    if (TTF_Init() == -1) {
+        std::cerr << "SDL_ttf no pudo inicializarse: " << TTF_GetError() << std::endl;
+        return false;
+    }
+    
+    // Cargar fuente (asegúrate de que exista esta ruta)
+    font = TTF_OpenFont("fonts/arial.ttf", 16);
+    if (!font) {
+        std::cerr << "No se pudo cargar la fuente: " << TTF_GetError() << std::endl;
+        // Continuar sin fuente, mostraremos mensajes en consola
     }
     
     // Crear ventana
@@ -63,15 +77,101 @@ bool Game::initialize() {
     return true;
 }
 
-void Game::run() {
-    while (running) {
-        handleEvents();
-        update();
-        render();
-        
-        // Control de FPS simple
-        SDL_Delay(1000/60); // Aproximadamente 60 FPS
+void Game::addAttackMessage(const std::string& text, const SDL_Color& color) {
+    AttackMessage message;
+    message.text = text;
+    message.timeToLive = 2000;  // 2 segundos
+    message.color = color;
+    
+    attackMessages.push_front(message);  // Añadir al principio
+    
+    // Limitar número de mensajes
+    if (attackMessages.size() > MAX_MESSAGES) {
+        attackMessages.pop_back();  // Eliminar el más antiguo
     }
+    
+    // También mostrar en consola por si acaso
+    std::cout << text << std::endl;
+}
+
+void Game::update() {
+    // Calcular tiempo transcurrido desde el último frame
+    Uint32 currentTime = SDL_GetTicks();
+    int deltaTime = currentTime - lastFrameTime;
+    lastFrameTime = currentTime;
+    
+    // Actualizar torres
+    towerManager->update(deltaTime);
+    
+    // Actualizar enemigos
+    enemyManager->update(deltaTime);
+    
+    // Procesar ataques (pasar puntero a Game para los mensajes)
+    std::cout << "Checking tower attacks..." << std::endl;
+    enemyManager->processTowerAttacks(towerManager->getTowers(), this);
+    
+    // Actualizar tiempo de vida de los mensajes
+    for (auto it = attackMessages.begin(); it != attackMessages.end(); ) {
+        it->timeToLive -= deltaTime;
+        if (it->timeToLive <= 0) {
+            it = attackMessages.erase(it);
+        } else {
+            ++it;
+        }
+    }
+    
+    // Debug: Print current game state
+    static int frameCounter = 0;
+    if (frameCounter++ % 60 == 0) {  // Print every 60 frames
+        std::cout << "Game State: " 
+                  << enemyManager->getEnemyCount() << " enemies active, "
+                  << "Player gold: " << resources->getGold() << std::endl;
+    }
+}
+
+void Game::renderAttackMessages() {
+    // Si no tenemos fuente, no renderizar nada
+    if (!font) return;
+    
+    int y = 50;  // Comenzar desde arriba
+    
+    for (const auto& msg : attackMessages) {
+        SDL_Surface* surface = TTF_RenderText_Blended(font, msg.text.c_str(), msg.color);
+        if (surface) {
+            SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+            if (texture) {
+                SDL_Rect destRect = {SCREEN_WIDTH - surface->w - 10, y, surface->w, surface->h};
+                SDL_RenderCopy(renderer, texture, nullptr, &destRect);
+                SDL_DestroyTexture(texture);
+                y += surface->h + 5;  // Espacio entre mensajes
+            }
+            SDL_FreeSurface(surface);
+        }
+    }
+}
+
+void Game::render() {
+    // Limpiar pantalla
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_RenderClear(renderer);
+    
+    // Dibujar tablero
+    board->render(renderer);
+    
+    // Dibujar torres
+    towerManager->render(renderer, GRID_SIZE);
+    
+    // Dibujar enemigos
+    enemyManager->render(renderer);
+    
+    // Dibujar interfaz de usuario
+    renderUI();
+    
+    // Dibujar mensajes de ataque
+    renderAttackMessages();
+    
+    // Actualizar pantalla
+    SDL_RenderPresent(renderer);
 }
 
 void Game::handleEvents() {
@@ -123,41 +223,15 @@ void Game::handleEvents() {
     }
 }
 
-void Game::update() {
-    // Calcular tiempo transcurrido desde el último frame
-    Uint32 currentTime = SDL_GetTicks();
-    int deltaTime = currentTime - lastFrameTime;
-    lastFrameTime = currentTime;
-    
-    // Actualizar torres
-    towerManager->update(deltaTime);
-    
-    // Actualizar enemigos
-    enemyManager->update(deltaTime);
-    
-    // Procesar ataques de torres a enemigos (se implementará después)
-    // enemyManager->processTowerAttacks(towerManager->getTowers());
-}
-
-void Game::render() {
-    // Limpiar pantalla
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    SDL_RenderClear(renderer);
-    
-    // Dibujar tablero
-    board->render(renderer);
-    
-    // Dibujar torres
-    towerManager->render(renderer, GRID_SIZE);
-    
-    // Dibujar enemigos
-    enemyManager->render(renderer);
-    
-    // Dibujar interfaz de usuario
-    renderUI();
-    
-    // Actualizar pantalla
-    SDL_RenderPresent(renderer);
+void Game::run() {
+    while (running) {
+        handleEvents();
+        update();
+        render();
+        
+        // Control de FPS simple
+        SDL_Delay(1000/60); // Aproximadamente 60 FPS
+    }
 }
 
 void Game::renderUI() {
@@ -166,13 +240,43 @@ void Game::renderUI() {
     SDL_SetRenderDrawColor(renderer, 50, 50, 50, 200);
     SDL_RenderFillRect(renderer, &goldRect);
     
-    // Por ahora, solo imprimimos el oro en la consola
-    std::cout << "Oro: " << resources->getGold() << std::endl;
+    // Si tenemos fuente, mostrar el oro en pantalla
+    if (font) {
+        std::string goldText = "Oro: " + std::to_string(resources->getGold());
+        SDL_Surface* surface = TTF_RenderText_Blended(font, goldText.c_str(), {255, 215, 0, 255});
+        if (surface) {
+            SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+            if (texture) {
+                SDL_Rect textRect = {SCREEN_WIDTH - 150, 15, surface->w, surface->h};
+                SDL_RenderCopy(renderer, texture, nullptr, &textRect);
+                SDL_DestroyTexture(texture);
+            }
+            SDL_FreeSurface(surface);
+        }
+    } else {
+        // Por ahora, solo imprimimos el oro en la consola
+        std::cout << "Oro: " << resources->getGold() << std::endl;
+    }
     
     // Información sobre oleadas (para la fase 3)
     SDL_Rect waveRect = {SCREEN_WIDTH - 160, 50, 150, 30};
     SDL_SetRenderDrawColor(renderer, 50, 50, 50, 200);
     SDL_RenderFillRect(renderer, &waveRect);
+    
+    // Mostrar información sobre oleadas si tenemos fuente
+    if (font) {
+        std::string waveText = "Oleada: " + std::to_string(enemyManager->getCurrentWave());
+        SDL_Surface* surface = TTF_RenderText_Blended(font, waveText.c_str(), {255, 255, 255, 255});
+        if (surface) {
+            SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+            if (texture) {
+                SDL_Rect textRect = {SCREEN_WIDTH - 150, 55, surface->w, surface->h};
+                SDL_RenderCopy(renderer, texture, nullptr, &textRect);
+                SDL_DestroyTexture(texture);
+            }
+            SDL_FreeSurface(surface);
+        }
+    }
     
     // Mostrar instrucciones de prueba
     if (testMode) {
@@ -188,6 +292,10 @@ void Game::clean() {
     delete resources;
     delete towerManager;
     delete enemyManager;
+    
+    // Liberar recursos de texto
+    if (font) TTF_CloseFont(font);
+    TTF_Quit();
     
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);

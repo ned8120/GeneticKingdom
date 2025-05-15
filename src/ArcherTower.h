@@ -6,7 +6,7 @@
 class ArcherTower : public Tower {
 private:
     static const int BASE_DAMAGE = 10;      // Bajo daño
-    static const int BASE_RANGE = 150;      // Alto alcance
+    static const int BASE_RANGE = 300;  // Para ArcherTower
     static const int BASE_ATTACK_SPEED = 500; // Ataque rápido (ms)
     static const int BASE_SPECIAL_COOLDOWN = 10000; // 10 segundos
     static const int BASE_COST = 25;        // Bajo costo

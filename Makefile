@@ -6,7 +6,7 @@ CXXFLAGS = -std=c++17 -Wall -Wextra
 
 # Banderas para SDL2
 SDL_FLAGS = $(shell sdl2-config --cflags)
-SDL_LIBS = $(shell sdl2-config --libs) -lSDL2_image
+SDL_LIBS = $(shell sdl2-config --libs) -lSDL2_image -lSDL2_ttf
 
 # Directorio de código fuente
 SRC_DIR = src

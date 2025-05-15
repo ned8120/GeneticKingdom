@@ -46,6 +46,9 @@ public:
     int getGoldValue() const { return goldValue; }
     SDL_Point getPosition() const { return {static_cast<int>(x), static_cast<int>(y)}; }
     
+    // Método para obtener la salud actual
+    int getHealth() const { return health; }
+    
     // Método para calcular la distancia a un punto
     float distanceTo(int targetX, int targetY) const;
     
@@ -54,6 +57,10 @@ public:
     
     // Método virtual para obtener el tipo específico
     virtual std::string getType() const = 0;
+
+
+    float getPathProgress() const { return static_cast<float>(currentPathIndex) / path.size(); }
+
 };
 
 #endif // ENEMY_H

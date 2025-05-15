@@ -4,6 +4,10 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <string>
+#include <iostream>  // For std::cout and std::endl
+
+class Enemy;  // This tells the compiler "Enemy is a class that will be defined elsewhere"
+
 
 // Clase base abstracta para todas las torres
 class Tower {
@@ -39,6 +43,19 @@ public:
     
     // Método para mejorar la torre
     virtual bool upgrade();
+
+
+    // Comprobar si la torre puede atacar ahora (basado en timer)
+    bool canAttack() const { return attackTimer >= attackSpeed; }
+
+    // Métodos para visualización de ataque y reseteo de temporizador
+    void visualAttack() {
+        attack(); // Solo para efectos visuales/sonido
+    }
+    
+    void resetTimer() {
+        attackTimer = 0;
+    }
     
     // Métodos para obtener información
     int getLevel() const { return level; }
