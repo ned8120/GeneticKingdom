@@ -30,6 +30,11 @@ protected:
     // Tiempo transcurrido desde el último ataque
     int attackTimer;
 
+     // Variables para ataques especiales
+    float specialAttackProbability;  // Probabilidad de ataque especial (0.0-1.0)
+    int specialAttackTimer;         // Temporizador para el ataque especial
+    bool specialAttackReady;        // Indica si el ataque especial está listo
+
 public:
     Tower(int r, int c, int initialCost, SDL_Texture* tex);
     virtual ~Tower();
@@ -70,6 +75,18 @@ public:
     
     // Método virtual para obtener el tipo específico
     virtual std::string getType() const = 0;
+
+
+    // Métodos para ataques especiales
+    virtual bool trySpecialAttack();
+    virtual void performSpecialAttack() = 0;  // Método virtual puro
+    
+    // Getters para ataques especiales
+    float getSpecialAttackProbability() const { return specialAttackProbability; }
+    bool isSpecialAttackReady() const { return specialAttackReady; }
+    
+    // Método para visualizar el ataque especial (para efectos)
+    void visualSpecialAttack();
 };
 
 #endif // TOWER_H

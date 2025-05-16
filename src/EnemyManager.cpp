@@ -530,6 +530,9 @@ void EnemyManager::processTowerAttacks(const std::vector<std::unique_ptr<Tower>>
         
         // Verificar si la torre puede atacar según su temporizador interno
         if (tower->canAttack()) {
+            // Verificar si se activará un ataque especial
+            bool specialAttack = tower->isSpecialAttackReady();
+            
             // Buscar enemigos para atacar
             if (!enemies.empty()) {
                 for (auto& enemy : enemies) {
@@ -550,35 +553,73 @@ void EnemyManager::processTowerAttacks(const std::vector<std::unique_ptr<Tower>>
                         if (distance <= towerRange) {
                             foundTargets = true;
                             
-                            // Efectos visuales del ataque
-                            tower->visualAttack();
-                            
-                            // IMPORTANTE: Aplicar daño al enemigo
-                            int damage = tower->getDamage();
-                            std::cout << ">>> APLICANDO DAÑO de " << damage << " al " << enemy->getType() << " <<<" << std::endl;
-                            int actualDamage = enemy->takeDamage(damage, tower->getType());
-                            
-                            // Mostrar información de daño
-                            std::cout << "¡¡ATAQUE EXITOSO!! " << tower->getType() << " ataca a " << enemy->getType() 
-                                    << " causando " << actualDamage << " de daño!" << std::endl;
-                            
-                            // NUEVO: Añadir mensaje en pantalla
-                            if (game) {
-                                std::string message = tower->getType() + " → " + enemy->getType() + 
-                                                     " (-" + std::to_string(actualDamage) + " HP) | Vida: " + 
-                                                     std::to_string(enemy->getHealth()) + " HP";
+                            // Determinar tipo de ataque
+                            if (specialAttack) {
+                                // Efectos visuales del ataque especial
+                                tower->visualSpecialAttack();
                                 
-                                // Color según el tipo de torre
-                                SDL_Color color = {255, 255, 255, 255}; // Blanco por defecto
+                                // IMPORTANTE: Aplicar daño al enemigo (modificar según tipo de torre)
+                                int baseDamage = tower->getDamage();
+                                int multiplier = 1;
+                                
+                                // Aplicar multiplicador según tipo de torre
                                 if (tower->getType() == "Arquero") {
-                                    color = {0, 150, 0, 255}; // Verde para arqueros
+                                    multiplier = 3; // Lluvia de flechas
                                 } else if (tower->getType() == "Mago") {
-                                    color = {0, 0, 200, 255}; // Azul para magos
+                                    multiplier = 2; // Explosión arcana
                                 } else if (tower->getType() == "Artillero") {
-                                    color = {200, 0, 0, 255}; // Rojo para artilleros
+                                    multiplier = 2; // Proyectil aturdidor
                                 }
                                 
-                                game->addAttackMessage(message, color);
+                                int damage = baseDamage * multiplier;
+                                std::cout << ">>> APLICANDO DAÑO ESPECIAL de " << damage << " al " << enemy->getType() << " <<<" << std::endl;
+                                int actualDamage = enemy->takeDamage(damage, tower->getType());
+                                
+                                // Mostrar información de daño
+                                std::cout << "¡¡ATAQUE ESPECIAL EXITOSO!! " << tower->getType() << " ataca a " << enemy->getType() 
+                                        << " causando " << actualDamage << " de daño!" << std::endl;
+                                
+                                // Añadir mensaje en pantalla
+                                if (game) {
+                                    std::string message = "¡ESPECIAL! " + tower->getType() + " → " + enemy->getType() + 
+                                                        " (-" + std::to_string(actualDamage) + " HP) | Vida: " + 
+                                                        std::to_string(enemy->getHealth()) + " HP";
+                                    
+                                    // Color brillante para ataques especiales
+                                    SDL_Color color = {255, 255, 0, 255}; // Amarillo brillante
+                                    game->addAttackMessage(message, color);
+                                }
+                            } else {
+                                // Efectos visuales del ataque normal
+                                tower->visualAttack();
+                                
+                                // IMPORTANTE: Aplicar daño normal al enemigo
+                                int damage = tower->getDamage();
+                                std::cout << ">>> APLICANDO DAÑO de " << damage << " al " << enemy->getType() << " <<<" << std::endl;
+                                int actualDamage = enemy->takeDamage(damage, tower->getType());
+                                
+                                // Mostrar información de daño
+                                std::cout << "¡¡ATAQUE EXITOSO!! " << tower->getType() << " ataca a " << enemy->getType() 
+                                        << " causando " << actualDamage << " de daño!" << std::endl;
+                                
+                                // Añadir mensaje en pantalla
+                                if (game) {
+                                    std::string message = tower->getType() + " → " + enemy->getType() + 
+                                                        " (-" + std::to_string(actualDamage) + " HP) | Vida: " + 
+                                                        std::to_string(enemy->getHealth()) + " HP";
+                                    
+                                    // Color según el tipo de torre
+                                    SDL_Color color = {255, 255, 255, 255}; // Blanco por defecto
+                                    if (tower->getType() == "Arquero") {
+                                        color = {0, 150, 0, 255}; // Verde para arqueros
+                                    } else if (tower->getType() == "Mago") {
+                                        color = {0, 0, 200, 255}; // Azul para magos
+                                    } else if (tower->getType() == "Artillero") {
+                                        color = {200, 0, 0, 255}; // Rojo para artilleros
+                                    }
+                                    
+                                    game->addAttackMessage(message, color);
+                                }
                             }
                             
                             // Reiniciar el temporizador después del ataque
@@ -590,7 +631,7 @@ void EnemyManager::processTowerAttacks(const std::vector<std::unique_ptr<Tower>>
                                 resources->addGold(goldGained);
                                 std::cout << "¡¡ENEMIGO ELIMINADO!! +" << goldGained << " de oro." << std::endl;
                                 
-                                // NUEVO: Mensaje de enemigo eliminado
+                                // Mensaje de enemigo eliminado
                                 if (game) {
                                     std::string message = "¡" + enemy->getType() + " eliminado! +" + 
                                                          std::to_string(goldGained) + " oro";

@@ -194,6 +194,42 @@ void TowerManager::renderTowerMenu(SDL_Renderer* renderer) const {
         SDL_RenderDrawRect(renderer, &artilleryButton);
     }
     
+    // Dibujar botón de mejora cuando hay una torre seleccionada
+    if (selectedTower) {
+        SDL_Rect upgradeButton = {130, 10, 30, 30};
+        
+        // Fondo del botón - color dorado brillante
+        SDL_SetRenderDrawColor(renderer, 255, 215, 0, 255);
+        SDL_RenderFillRect(renderer, &upgradeButton);
+        
+        // Borde del botón - más grueso para destacarlo
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_RenderDrawRect(renderer, &upgradeButton);
+        
+        // Dibujar un segundo borde para hacerlo más visible
+        SDL_Rect outerBorder = {129, 9, 32, 32};
+        SDL_RenderDrawRect(renderer, &outerBorder);
+        
+        // Dibujar símbolo de mejora (flecha hacia arriba)
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        
+        // Flecha hacia arriba
+        SDL_RenderDrawLine(renderer, 145, 15, 145, 35); // Eje vertical
+        SDL_RenderDrawLine(renderer, 137, 23, 145, 15); // Ala izquierda
+        SDL_RenderDrawLine(renderer, 153, 23, 145, 15); // Ala derecha
+        
+        // Mostrar costo de mejora si no está al nivel máximo
+        if (selectedTower->getLevel() < 3) {
+            // Aquí se podría añadir texto renderizado con el costo
+            // Por ahora solo mostramos en consola
+            std::cout << "Costo de mejora: " << selectedTower->getUpgradeCost() << " oro" << std::endl;
+        } else {
+            // Indicar nivel máximo con una X
+            SDL_RenderDrawLine(renderer, 135, 15, 155, 35);
+            SDL_RenderDrawLine(renderer, 135, 35, 155, 15);
+        }
+    }
+    
     // Mostrar precios (esto sería texto renderizado en una versión más avanzada)
     std::cout << "Arquero: 25 oro | Mago: 50 oro | Artillero: 75 oro" << std::endl;
 }

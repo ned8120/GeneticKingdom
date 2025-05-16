@@ -1,8 +1,11 @@
 #include "Tower.h"
+#include <random>
+#include <iostream>
 
 Tower::Tower(int r, int c, int initialCost, SDL_Texture* tex) 
     : level(1), row(r), col(c), cost(initialCost), upgradeCost(initialCost/2),
-      attackTimer(0), texture(tex) {
+      attackTimer(0), texture(tex), specialAttackProbability(0.1f), 
+      specialAttackTimer(0), specialAttackReady(false) {
     // Valores base serán asignados por las subclases
 }
 
@@ -62,14 +65,14 @@ void Tower::render(SDL_Renderer* renderer, int gridSize) const {
 }
 
 void Tower::update(int deltaTime) {
-    // Solo incrementar el temporizador, sin atacar automáticamente
+    // Incrementar temporizadores
     attackTimer += deltaTime;
+    specialAttackTimer += deltaTime;
     
-    // Eliminar o comentar esta parte:
-    // if (attackTimer >= attackSpeed) {
-    //     attack();
-    //     attackTimer = 0;
-    // }
+    // Verificar si es hora de un ataque especial
+    if (specialAttackTimer >= specialCooldown) {
+        trySpecialAttack();
+    }
 }
 
 bool Tower::upgrade() {
@@ -78,11 +81,15 @@ bool Tower::upgrade() {
         return false;
     }
     
-    // Actualiza nivel y aumenta estadísticas (las subclases pueden sobrescribir esto)
+    // Actualiza nivel y aumenta estadísticas
     level++;
     damage += damage * 0.3; // 30% más de daño
     range += 10; // Aumenta ligeramente el alcance
-    attackSpeed -= attackSpeed * 0.1; // 10% más rápido (menos tiempo entre ataques)
+    attackSpeed -= attackSpeed * 0.1; // 10% más rápido
+    
+    // Mejorar ataque especial
+    specialAttackProbability += 0.1f; // Mayor probabilidad
+    specialCooldown -= specialCooldown * 0.1f; // Menor tiempo de recarga
     
     return true;
 }
@@ -94,4 +101,32 @@ int Tower::getUpgradeCost() const {
 
 std::string Tower::getTypeString() const {
     return getType() + " Nivel " + std::to_string(level);
+}
+
+
+// Añadir estas funciones al final de Tower.cpp
+bool Tower::trySpecialAttack() {
+    // Actualizar temporizador de ataque especial
+    if (specialAttackTimer >= specialCooldown) {
+        // Verificar probabilidad
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+        
+        if (dist(gen) < specialAttackProbability) {
+            // Activar ataque especial
+            specialAttackReady = true;
+            return true;
+        }
+    }
+    return false;
+}
+
+void Tower::visualSpecialAttack() {
+    // Llamar a la implementación específica
+    performSpecialAttack();
+    
+    // Reiniciar temporizadores
+    specialAttackTimer = 0;
+    specialAttackReady = false;
 }
